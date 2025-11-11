@@ -1,48 +1,60 @@
 """
-Database Schemas
+Database Schemas for Hostel Management System
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name is the
+lowercase of the class name (e.g., Student -> "student").
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, Literal
+from datetime import date
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
+class Student(BaseModel):
+    roll_no: str = Field(..., description="Unique roll number")
     name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    email: EmailStr = Field(..., description="Email address")
+    phone: Optional[str] = Field(None, description="Phone number")
+    department: Optional[str] = Field(None, description="Department/Program")
+    year: Optional[int] = Field(None, ge=1, le=8, description="Year of study")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class Staff(BaseModel):
+    staff_id: str = Field(..., description="Unique staff ID")
+    name: str = Field(..., description="Full name")
+    role: str = Field(..., description="Role/Designation")
+    email: Optional[EmailStr] = Field(None)
+    phone: Optional[str] = Field(None)
 
-# Add your own schemas here:
-# --------------------------------------------------
+class Room(BaseModel):
+    number: str = Field(..., description="Room number")
+    capacity: int = Field(..., ge=1, description="Total capacity")
+    floor: Optional[int] = Field(None, ge=0)
+    type: Optional[Literal["single", "double", "triple"]] = Field(None)
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Allocation(BaseModel):
+    student_roll_no: str = Field(..., description="Roll number of student")
+    room_number: str = Field(..., description="Allocated room number")
+    start_date: date = Field(...)
+    end_date: Optional[date] = Field(None)
+    status: Literal["active", "completed", "cancelled"] = Field("active")
+
+class Attendance(BaseModel):
+    att_date: date = Field(..., description="Attendance date")
+    student_roll_no: str = Field(...)
+    status: Literal["present", "absent", "leave"] = Field("present")
+    noted_by: Optional[str] = Field(None, description="Staff ID or name")
+
+class Visitor(BaseModel):
+    name: str = Field(...)
+    visiting_student_roll_no: Optional[str] = Field(None)
+    purpose: Optional[str] = Field(None)
+    in_time: str = Field(..., description="ISO time or description")
+    out_time: Optional[str] = Field(None)
+
+class Complaint(BaseModel):
+    raised_by_roll_no: Optional[str] = Field(None, description="Student roll number (if applicable)")
+    raised_by_staff_id: Optional[str] = Field(None, description="Staff ID (if applicable)")
+    subject: str = Field(...)
+    description: str = Field(...)
+    category: Optional[str] = Field(None, description="Auto or manual category")
+    sentiment: Optional[str] = Field(None, description="Auto sentiment label")
+    severity: Optional[Literal["low", "medium", "high"]] = Field(None)
